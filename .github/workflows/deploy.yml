@@ -3,7 +3,7 @@ name: CI/CD with SSH (No Docker)
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   deploy:
