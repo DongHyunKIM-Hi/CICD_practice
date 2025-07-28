@@ -41,7 +41,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "build/libs/*.jar"
-          target: "/home/ubuntu/app"
+          target: "/home/ubuntu/app/myapp.jar"
 
       - name: Run app on EC2 via deploy.sh
         uses: appleboy/ssh-action@v1.0.3
