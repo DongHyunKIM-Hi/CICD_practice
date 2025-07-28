@@ -3,7 +3,7 @@ name: CI/CD with SSH (No Docker)
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   deploy:
@@ -43,14 +43,10 @@ jobs:
           source: "build/libs/*.jar"
           target: "/home/ubuntu/app"
 
-      - name: Run app on EC2
+      - name: Run app on EC2 via deploy.sh
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd /home/ubuntu/app
-            pkill -f myapp.jar || true
-            mv *.jar myapp.jar
-            nohup java -jar myapp.jar > app.log 2>&1 & disown
+          script: bash /home/ubuntu/app/deploy.sh
