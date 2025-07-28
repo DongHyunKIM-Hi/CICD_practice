@@ -33,7 +33,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
           source: build/libs/demo-*-SNAPSHOT.jar
-          target: /home/ec2-user/app/
+          target: /home/ubuntu/app/
 
       - name: Restart Spring Boot app
         uses: appleboy/ssh-action@v0.1.10
@@ -43,4 +43,4 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             pkill -f 'java -jar' || true
-            nohup java -jar /home/ec2-user/app/demo-*-SNAPSHOT.jar > app.log 2>&1 &
+            nohup java -jar /home/ubuntu/demo-*-SNAPSHOT.jar > app.log 2>&1 &
