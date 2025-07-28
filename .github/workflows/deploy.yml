@@ -3,7 +3,7 @@ name: CI/CD with SSH (No Docker)
 on:
   push:
     branches:
-      - master
+      - master   # 필요에 따라 main으로 변경 가능
 
 jobs:
   build:
@@ -47,8 +47,8 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "*.jar"
-          target: "/home/ubuntu/app"
+          source: "*[!-plain].jar"               # ✅ plain.jar 제외
+          target: "/home/ubuntu/app/myapp.jar"   # ✅ 업로드 시 이름 고정
 
       - name: Run app via SSH
         uses: appleboy/ssh-action@master
