@@ -3,7 +3,7 @@ name: CI/CD with SSH (No Docker)
 on:
   push:
     branches:
-      - master
+      - main
 
 jobs:
   deploy:
@@ -23,17 +23,27 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew clean build -x test
 
-      # ✅ 1. JAR 파일 복사 (scp-action 사용)
+      # ✅ EC2에 폴더 미리 만들기
+      - name: Prepare app directory on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            mkdir -p /home/ubuntu/app
+
+      # ✅ JAR 복사
       - name: Upload JAR to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "build/libs/myapp-0.0.1-SNAPSHOT.jar"
-          target: "/home/ubuntu/app/myapp.jar"
+          source: "build/libs/*.jar"        # 🔹 빌드된 JAR 자동 매칭
+          target: "/home/ubuntu/app"
 
-      # ✅ 2. EC2에서 실행
+      # ✅ JAR 실행
       - name: Run app on EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -43,4 +53,5 @@ jobs:
           script: |
             cd /home/ubuntu/app
             pkill -f myapp.jar || true
+            mv *.jar myapp.jar
             nohup java -jar myapp.jar > app.log 2>&1 &
