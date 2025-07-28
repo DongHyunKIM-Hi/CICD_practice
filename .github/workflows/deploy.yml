@@ -6,45 +6,52 @@ on:
       - master
 
 jobs:
-  deploy:
-    runs-on: ubuntu-22.04
+  build:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v3
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
           distribution: 'temurin'
-          cache: gradle
+          java-version: '17'
 
-      - name: Build with Gradle
-        run: ./gradlew clean bootJar -x test
+      - name: Grant permission to gradlew
+        run: chmod +x ./gradlew
 
-      - name: Debug JAR path
-        run: ls -l build/libs
+      - name: Run tests
+        run: ./gradlew build --no-daemon
 
-      - name: Prepare app directory on EC2
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: app
+          path: build/libs/*.jar
+  deploy:
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: app
+
+      - name: Deploy to EC2
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          script: mkdir -p /home/ubuntu/app
+          source: "*.jar"
+          target: "/home/ubuntu/app"
 
-      - name: Upload JAR to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "build/libs/*.jar"
-          target: "/home/ubuntu/app/myapp.jar"
-
-      - name: Run app on EC2 via deploy.sh
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Run app via SSH
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ubuntu
